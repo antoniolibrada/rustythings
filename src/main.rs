@@ -1,6 +1,5 @@
 mod config;
 mod db;
-mod errors;
 mod model;
 
 use crate::config::AppConfig;
@@ -20,31 +19,39 @@ async fn list(state: web::Data<AppState>) -> HttpResponse {
     let res = state.conn.list();
     match res {
         Ok(list) => HttpResponse::Ok().json(list),
-        Err(err) => HttpResponse::InternalServerError().finish(),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    }
+}
+#[get("/{id}")]
+async fn get(params: web::Path<u32>, state: web::Data<AppState>) -> HttpResponse {
+    let id = params.into_inner();
+    let res = state.conn.get(&id);
+    match res {
+        Ok(todo) => HttpResponse::Ok().json(todo),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
 #[post("")]
 async fn add(state: web::Data<AppState>, todo: web::Json<DTOAddTodoInput>) -> HttpResponse {
     let res = state.conn.add(&todo.title);
-    print!("{}", &todo.title);
     match res {
-        Ok(usize) => HttpResponse::Ok().finish(),
-        Err(err) => HttpResponse::InternalServerError().finish(),
+        Ok(todo) => HttpResponse::Ok().json(todo),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
 #[put("/{id}")]
 async fn update(
-    params: web::Path<(u32)>,
+    params: web::Path<u32>,
     state: web::Data<AppState>,
     todo: web::Json<DTOUpdateTodoInput>,
 ) -> HttpResponse {
     let id = params.into_inner();
     let res = state.conn.update(&todo.title, &todo.completed, &id);
     match res {
-        Ok(usize) => HttpResponse::Ok().finish(),
-        Err(err) => HttpResponse::InternalServerError().finish(),
+        Ok(todo) => HttpResponse::Ok().json(todo),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }
 
@@ -69,6 +76,7 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/todo")
                     .service(list)
+                    .service(get)
                     .service(add)
                     .service(update),
             )

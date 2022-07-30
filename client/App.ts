@@ -36,17 +36,25 @@ export class App extends Component<{}, State> {
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const title = formData.get("title") as string;
-    return add({ title })
-      .then(() => this.getData())
-      .then(() => {
-        form.reset();
-        return this.setState({ ...this.state, sending: false });
-      });
+    return add({ title }).then((todo) => {
+      form.reset();
+      return this.setState((s) => ({
+        todos: [...s.todos, todo],
+        sending: false,
+      }));
+    });
   }
 
   complete(todo: Todo) {
-    return update(todo.id, { ...todo, completed: !todo.completed }).then(() =>
-      this.getData()
+    return update(todo.id, { ...todo, completed: !todo.completed }).then(
+      (todo) =>
+        this.setState((s) => ({
+          ...s,
+          todos: s.todos.map((t) => {
+            if (t.id === todo.id) return todo;
+            else return t;
+          }),
+        }))
     );
   }
 
@@ -75,16 +83,8 @@ export class App extends Component<{}, State> {
         this.state.todos.map((todo) =>
           h(
             "li",
-            {},
-            h(
-              "input",
-              {
-                type: "checkbox",
-                checked: todo.completed,
-                onClick: () => this.complete(todo),
-              },
-              todo.title
-            ),
+            { onClick: () => this.complete(todo) },
+            h("span", {}, todo.completed ? "✅" : ""),
             h("span", {}, todo.title)
           )
         )

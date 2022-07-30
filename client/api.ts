@@ -8,7 +8,7 @@ export function list(): Promise<Todo[]> {
   return fetch("/todo").then((res) => res.json());
 }
 
-export function add({ title }: Pick<Todo, "title">): Promise<Response> {
+export function add({ title }: Pick<Todo, "title">): Promise<Todo> {
   return fetch("/todo", {
     method: "POST",
     headers: {
@@ -17,13 +17,13 @@ export function add({ title }: Pick<Todo, "title">): Promise<Response> {
     body: JSON.stringify({
       title,
     }),
-  });
+  }).then((res) => res.json());
 }
 
 export function update(
   id: string,
   { title, completed }: Pick<Todo, "title" | "completed">
-): Promise<Response> {
+): Promise<Todo> {
   return fetch(`/todo/${id}`, {
     method: "PUT",
     headers: {
@@ -33,5 +33,5 @@ export function update(
       title,
       completed,
     }),
-  });
+  }).then((res) => res.json());
 }
