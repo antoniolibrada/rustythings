@@ -1,31 +1,50 @@
 mod config;
 mod db;
+mod errors;
 mod model;
 
 use crate::config::AppConfig;
 
 use actix_files::Files;
-use actix_web::{get, middleware, post, web, App, HttpResponse, HttpServer};
+use actix_web::{get, middleware, post, put, web, App, HttpResponse, HttpServer};
 use db::DataConect;
 use dotenv::dotenv;
-use model::DTOTodoInput;
+use model::*;
 
 struct AppState {
     pub conn: DataConect,
 }
 
-#[get("/")]
+#[get("")]
 async fn list(state: web::Data<AppState>) -> HttpResponse {
-    let result = state.conn.list();
-    HttpResponse::Ok().json(result)
+    let res = state.conn.list();
+    match res {
+        Ok(list) => HttpResponse::Ok().json(list),
+        Err(err) => HttpResponse::InternalServerError().finish(),
+    }
 }
 
-#[post("/")]
-async fn add(state: web::Data<AppState>, todo: web::Json<DTOTodoInput>) -> HttpResponse {
-    let success = state.conn.add(&todo.title);
-    match success {
-        true => HttpResponse::Ok().finish(),
-        false => HttpResponse::InternalServerError().finish(),
+#[post("")]
+async fn add(state: web::Data<AppState>, todo: web::Json<DTOAddTodoInput>) -> HttpResponse {
+    let res = state.conn.add(&todo.title);
+    print!("{}", &todo.title);
+    match res {
+        Ok(usize) => HttpResponse::Ok().finish(),
+        Err(err) => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+#[put("/{id}")]
+async fn update(
+    params: web::Path<(u32)>,
+    state: web::Data<AppState>,
+    todo: web::Json<DTOUpdateTodoInput>,
+) -> HttpResponse {
+    let id = params.into_inner();
+    let res = state.conn.update(&todo.title, &todo.completed, &id);
+    match res {
+        Ok(usize) => HttpResponse::Ok().finish(),
+        Err(err) => HttpResponse::InternalServerError().finish(),
     }
 }
 
@@ -47,7 +66,13 @@ async fn main() -> std::io::Result<()> {
                 conn: DataConect::new(&config.database.connection_string),
             }))
             .wrap(middleware::Logger::default())
-            .service(web::scope("/todo").service(list).service(add))
+            .service(
+                web::scope("/todo")
+                    .service(list)
+                    .service(add)
+                    .service(update),
+            )
+            .service(Files::new("/dist", "./dist").prefer_utf8(true))
             .service(
                 Files::new("/", "./static")
                     .prefer_utf8(true)

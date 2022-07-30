@@ -7,6 +7,12 @@ pub struct Todo {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct DTOTodoInput {
+pub struct DTOAddTodoInput {
     pub title: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct DTOUpdateTodoInput {
+    pub title: String,
+    pub completed: bool,
 }
