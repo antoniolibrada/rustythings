@@ -19,7 +19,9 @@ async fn list(state: web::Data<AppState>) -> HttpResponse {
     let res = state.conn.list();
     match res {
         Ok(list) => HttpResponse::Ok().json(list),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => HttpResponse::InternalServerError().json(ErrorDTO {
+            message: err.to_string(),
+        }),
     }
 }
 #[get("/{id}")]
@@ -28,7 +30,9 @@ async fn get(params: web::Path<u32>, state: web::Data<AppState>) -> HttpResponse
     let res = state.conn.get(&id);
     match res {
         Ok(todo) => HttpResponse::Ok().json(todo),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => HttpResponse::InternalServerError().json(ErrorDTO {
+            message: err.to_string(),
+        }),
     }
 }
 
@@ -37,7 +41,9 @@ async fn add(state: web::Data<AppState>, todo: web::Json<DTOAddTodoInput>) -> Ht
     let res = state.conn.add(&todo.title);
     match res {
         Ok(todo) => HttpResponse::Ok().json(todo),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => HttpResponse::InternalServerError().json(ErrorDTO {
+            message: err.to_string(),
+        }),
     }
 }
 
@@ -51,7 +57,9 @@ async fn update(
     let res = state.conn.update(&todo.title, &todo.completed, &id);
     match res {
         Ok(todo) => HttpResponse::Ok().json(todo),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+        Err(err) => HttpResponse::InternalServerError().json(ErrorDTO {
+            message: err.to_string(),
+        }),
     }
 }
 

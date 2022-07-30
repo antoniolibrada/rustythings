@@ -16,3 +16,8 @@ pub struct DTOUpdateTodoInput {
     pub title: String,
     pub completed: bool,
 }
+
+#[derive(Deserialize, Serialize)]
+pub struct ErrorDTO {
+    pub message: String,
+}
