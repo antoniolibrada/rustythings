@@ -1,13 +1,14 @@
 mod config;
 mod db;
+mod model;
 
-use crate::config::Config;
+use crate::config::AppConfig;
 
 use actix_files::Files;
 use actix_web::{get, middleware, post, web, App, HttpResponse, HttpServer};
+use db::DataConect;
 use dotenv::dotenv;
-
-use db::{DataConect, Todo};
+use model::DTOTodoInput;
 
 struct AppState {
     pub conn: DataConect,
@@ -20,16 +21,19 @@ async fn list(state: web::Data<AppState>) -> HttpResponse {
 }
 
 #[post("/")]
-async fn add(state: web::Data<AppState>, todo: web::Json<Todo>) -> HttpResponse {
-    state.conn.add(&todo.title);
-    HttpResponse::Ok().json(todo)
+async fn add(state: web::Data<AppState>, todo: web::Json<DTOTodoInput>) -> HttpResponse {
+    let success = state.conn.add(&todo.title);
+    match success {
+        true => HttpResponse::Ok().finish(),
+        false => HttpResponse::InternalServerError().finish(),
+    }
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
 
-    let config = Config::from_env().unwrap();
+    let config = AppConfig::from_env().unwrap();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     log::info!(
         "Starting server at http://{}:{}",
@@ -40,7 +44,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(AppState {
-                conn: DataConect::new("TODO.db"),
+                conn: DataConect::new(&config.database.connection_string),
             }))
             .wrap(middleware::Logger::default())
             .service(web::scope("/todo").service(list).service(add))

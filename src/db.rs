@@ -1,28 +1,15 @@
 extern crate rusqlite;
 extern crate serde;
-
+use crate::model::Todo;
 use rusqlite::Connection;
-use serde::{Deserialize, Serialize};
 
 pub struct DataConect {
     pub conn: Connection,
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct Todo {
-    pub title: String,
-    pub completed: bool,
-}
-
 pub enum AppErrorType {
     DbError,
     NotFoundError,
-}
-
-pub struct AppError {
-    pub message: Option<String>,
-    pub cause: Option<String>,
-    pub error_type: AppErrorType,
 }
 
 impl DataConect {
@@ -51,13 +38,14 @@ impl DataConect {
     pub fn list(&self) -> Vec<Todo> {
         let mut stmt = self
             .conn
-            .prepare("SELECT title, completed FROM todos")
+            .prepare("SELECT id, title, completed FROM todos")
             .unwrap();
         let todos = stmt
             .query_map([], |row| {
                 Ok(Todo {
-                    title: row.get(0).unwrap(),
-                    completed: row.get(1).unwrap(),
+                    id: row.get(0).unwrap(),
+                    title: row.get(1).unwrap(),
+                    completed: row.get(2).unwrap(),
                 })
             })
             .unwrap();
