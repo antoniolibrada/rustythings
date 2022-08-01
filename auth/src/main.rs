@@ -1,6 +1,7 @@
 use actix_web::{middleware, App, HttpServer};
 
 mod db;
+mod errors;
 mod handlers;
 mod models;
 

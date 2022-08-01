@@ -1,11 +1,12 @@
 use crate::models::User;
 use actix_web::{get, HttpResponse};
+use uuid::Uuid;
 
 #[get("/")]
 pub async fn get() -> HttpResponse {
     HttpResponse::Ok().json(User {
         email: "test@example.com".to_string(),
-        id: "randon-uuid".to_string(),
+        id: Uuid::new_v4(),
         name: "Max Mustermann".to_string(),
     })
 }
@@ -27,7 +28,6 @@ mod tests {
         let user: User = test::read_body_json(resp).await;
 
         assert_eq!(user.email, "test@example.com");
-        assert_eq!(user.id, "randon-uuid");
         assert_eq!(user.name, "Max Mustermann");
     }
 }
